@@ -80,6 +80,15 @@
         .date-filter button:hover {
             background-color: #0056b3;
         }
+        /* Money Effect */
+        @keyframes money-effect {
+            0% { color: #007bff; transform: scale(1); }
+            50% { color: #28a745; transform: scale(1.5); }
+            100% { color: #007bff; transform: scale(1); }
+        }
+        .money-effect {
+            animation: money-effect 1.5s ease-in-out;
+        }
     </style>
 </head>
 <body>
@@ -87,12 +96,12 @@
     <div class="counter">
         Current Calls: <span id="currentResponsesCount">0</span><br>
         Total Calls: <span id="totalResponsesCount">0</span><br>
-        Total Cost: <span id="totalCost">0</span> $
+        Total Cost: $<span id="totalCost">0</span>
     </div>
     <div class="date-filter">
         Start Date: <input type="date" id="startDate">
         End Date: <input type="date" id="endDate">
-        <button onclick="fetchCDRCost()">Filter</button>
+        <button id="filterBtn" onclick="fetchCDRCost()">Filter</button>
     </div>
     <table id="callsTable">
         <thead>
@@ -111,9 +120,11 @@
         </tbody>
     </table>
     <audio id="notificationSound" src="{{ url_for('static', filename='notification.mp3') }}" preload="auto"></audio>
+    <audio id="updateNotificationSound" src="{{ url_for('static', filename='notification1.mp3') }}" preload="auto"></audio>
     <script>
         let previousDataKeys = new Set();
         let totalResponsesCount = 0;
+        let lastTotalCost = 0;
 
         async function fetchLiveCalls() {
             try {
@@ -176,7 +187,16 @@
                 if (data.error) {
                     alert(data.error);
                 } else {
-                    document.getElementById('totalCost').textContent = data.cost;
+                    const totalCostElement = document.getElementById('totalCost');
+                    if (parseFloat(data.cost) !== lastTotalCost) {
+                        lastTotalCost = parseFloat(data.cost);
+                        totalCostElement.textContent = data.cost;
+                        totalCostElement.classList.add('money-effect');
+                        setTimeout(() => {
+                            totalCostElement.classList.remove('money-effect');
+                        }, 1500);
+                        playUpdateNotificationSound();
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching CDR cost:', error);
@@ -192,10 +212,24 @@
             });
         }
 
+        function playUpdateNotificationSound() {
+            const sound = document.getElementById('updateNotificationSound');
+            sound.play().then(() => {
+                console.log('Update notification sound played for total cost change');
+            }).catch(error => {
+                console.error('Error playing update notification sound for total cost change:', error);
+            });
+        }
+
         // Fetch data every 5 seconds
         setInterval(() => {
             fetchLiveCalls();
-        }, 500);
+        }, 5000);
+
+        // Click the filter button every 1 minute to refresh the total cost
+        setInterval(() => {
+            document.getElementById('filterBtn').click();
+        }, 60000);
 
         // Initial fetch
         fetchLiveCalls();

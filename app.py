@@ -60,7 +60,7 @@ def get_cdr_cost():
                     total_cost += cost
                 except ValueError as ve:
                     print(f"ValueError parsing cost: {ve}")
-        return jsonify({'cost': total_cost})
+        return jsonify({'cost': "{:.4f}".format(total_cost)})
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err}")  # Log HTTP errors
         return jsonify({'error': 'HTTP error occurred'}), 500

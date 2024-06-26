@@ -234,7 +234,7 @@
             banner.style.display = 'block';
             setTimeout(() => {
                 banner.style.display = 'none';
-            }, 5000);
+            }, 10000);
         }
 
         function playNotificationSound() {
@@ -258,12 +258,12 @@
         // Fetch data every 5 seconds
         setInterval(() => {
             fetchLiveCalls();
-        }, 5000);
+        }, 500);
 
         // Click the filter button every 1 minute to refresh the total cost
         setInterval(() => {
             document.getElementById('filterBtn').click();
-        }, 60000);
+        }, 30000);
 
         // Initial fetch
         fetchLiveCalls();

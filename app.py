@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, render_template, request
 import requests
+import csv
+from io import StringIO
 
 app = Flask(__name__)
 
@@ -41,9 +43,30 @@ def get_cdr_cost():
         }
     }
     response = requests.post(f"{API_URL}/csv", headers=headers, json=payload)
-    data = response.json()
-    cost = data['result']['group_summaries']['cost']
-    return jsonify({'cost': cost})
+    try:
+        response.raise_for_status()  # Raise an HTTPError for bad responses
+        csv_data = response.text
+        #print(f"CSV response: {csv_data}")  # Log the CSV response for debugging
+
+        # Parse the CSV data
+        total_cost = 0.0
+        f = StringIO(csv_data)
+        reader = csv.reader(f, delimiter=';')
+        for row in reader:
+            print(f"CSV row: {row}")  # Log each row for debugging
+            if row and len(row) > 5:
+                try:
+                    cost = float(row[5])
+                    total_cost += cost
+                except ValueError as ve:
+                    print(f"ValueError parsing cost: {ve}")
+        return jsonify({'cost': total_cost})
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")  # Log HTTP errors
+        return jsonify({'error': 'HTTP error occurred'}), 500
+    except Exception as e:
+        print(f"Error parsing CSV response: {e}")  # Log any parsing errors
+        return jsonify({'error': 'Error parsing CSV response'}), 500
 
 @app.route('/')
 def index():
